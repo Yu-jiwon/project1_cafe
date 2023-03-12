@@ -1,0 +1,310 @@
+package com.hazamong.cafe;
+
+import android.os.Bundle;
+import android.os.RemoteException;
+import android.util.Log;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.pedro.library.AutoPermissions;
+import com.pedro.library.AutoPermissionsListener;
+
+import org.altbeacon.beacon.Beacon;
+import org.altbeacon.beacon.BeaconConsumer;
+import org.altbeacon.beacon.BeaconManager;
+import org.altbeacon.beacon.BeaconParser;
+import org.altbeacon.beacon.Identifier;
+import org.altbeacon.beacon.MonitorNotifier;
+import org.altbeacon.beacon.RangeNotifier;
+import org.altbeacon.beacon.Region;
+
+import java.util.Collection;
+
+public class beacon extends AppCompatActivity implements BeaconConsumer, AutoPermissionsListener{
+
+    TextView textView;
+
+    private BeaconManager beaconManager;
+
+    String beaconUUID="74278BDA-B644-4520-8F0C-720EAF059935"; // beacon -uuid
+
+    private String TAG = "beacon";
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_beacon);
+        textView=findViewById(R.id.beacon_id);
+
+        AutoPermissions.Companion.loadAllPermissions(this,101); // AutoPermissions
+
+        beaconManager = BeaconManager.getInstanceForApplication(this);
+        beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"));
+        beaconManager.bind(this);
+
+    }// onCreate()..
+
+    @Override
+    public void onBeaconServiceConnect() {
+        beaconManager.removeAllMonitorNotifiers();
+        beaconManager.setRangeNotifier(new RangeNotifier() {
+            @Override
+            public void didRangeBeaconsInRegion(Collection beacons, Region region)
+            {
+                if (beacons.size() > 0)
+                {
+                    Log.i(TAG, "The first beacon I see is about "+((Beacon)beacons.iterator().next()).getDistance()+" meters away.");
+                }
+            }
+        });
+        beaconManager.addMonitorNotifier(new MonitorNotifier() {
+            @Override
+            public void didEnterRegion(Region region) {
+                Log.i(TAG, "I just saw an beacon for the first time!");
+                Toast.makeText(beacon.this, "didEnterRegion - 비콘 연결됨", Toast.LENGTH_SHORT).show();
+                textView.setText("Beacon connected");
+
+            }
+
+            @Override
+            public void didExitRegion(Region region) {
+                Log.i(TAG, "I no longer see an beacon");
+                Toast.makeText(beacon.this, "didExitRegion - 비콘 연결 끊김", Toast.LENGTH_SHORT).show();
+                textView.setText("Beacon disconnected");
+            }
+
+            @Override
+            public void didDetermineStateForRegion(int state, Region region) {
+                Log.i(TAG, "I have just switched from seeing/not seeing beacons: "+state);
+            }
+
+        });
+
+        try {
+            beaconManager.startMonitoringBeaconsInRegion(new Region("beacon", Identifier.parse(beaconUUID), null, null));
+        } catch (RemoteException e) {    }
+        try
+        {
+            beaconManager.startRangingBeaconsInRegion(new Region("beacon", Identifier.parse(beaconUUID), null, null));
+        }
+        catch (RemoteException e)
+        {
+        }
+    }// onBeaconServiceConnect()..
+
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        beaconManager.unbind(this);
+    }
+
+    @Override
+    public void onDenied(int i, String[] strings) {
+    }
+
+    @Override
+    public void onGranted(int i, String[] strings) {
+    }
+
+    @Override
+    public void onPointerCaptureChanged(boolean hasCapture) {
+    }
+
+}
+
+
+ @Override
+//    public void onPointerCaptureChanged(boolean hasCapture) {
+//    }
+//
+//
+//    private void createNotification() {
+//
+//        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "default");
+//
+//        builder.setSmallIcon(R.mipmap.ic_launcher);
+//        builder.setContentTitle("cafe");
+//        builder.setContentText("비콘연결 끊김");
+//        builder.setAutoCancel(false);
+//
+//        //builder.setColor(Color.RED);
+//        // 사용자가 탭을 클릭하면 자동 제거
+//        builder.setAutoCancel(true);
+//
+//        // 알림 표시
+//        NotificationManager notificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//            notificationManager.createNotificationChannel(new NotificationChannel("default", "기본 채널", NotificationManager.IMPORTANCE_DEFAULT));
+//        }}}
+
+package com.hazamong.cafe;
+
+import android.Manifest;
+import android.content.Intent;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.RemoteException;
+import android.util.Log;
+import android.content.pm.PackageManager;
+
+import androidx.annotation.RequiresApi;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
+import android.widget.TextView;
+import android.widget.Button;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.pedro.library.AutoPermissions;
+import com.pedro.library.AutoPermissionsListener;
+
+import org.altbeacon.beacon.Beacon;
+import org.altbeacon.beacon.BeaconConsumer;
+import org.altbeacon.beacon.BeaconManager;
+import org.altbeacon.beacon.BeaconParser;
+import org.altbeacon.beacon.Identifier;
+import org.altbeacon.beacon.MonitorNotifier;
+import org.altbeacon.beacon.RangeNotifier;
+import org.altbeacon.beacon.Region;
+
+import androidx.core.app.NotificationCompat;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.app.PendingIntent;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.zip.Inflater;
+
+public class beacon extends AppCompatActivity implements BeaconConsumer {
+
+    TextView textView;
+    PendingIntent intent;
+    private Button connected;
+    protected static final String TAG1 = "MonitoringActivity";
+    protected static final String TAG2 = "RangingActivity";
+    private BeaconManager beaconManager;
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_beacon);
+        textView = findViewById(R.id.beacon_id);
+        intent = PendingIntent.getActivity(this, 0, new Intent(getApplicationContext(), MainActivity.class), PendingIntent.FLAG_UPDATE_CURRENT);
+
+        connected = findViewById(R.id.connected);
+        connected.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
+            @Override
+            public void onClick(View view) {
+                textView.setText("Beacon connected");
+                //createNotification();
+            }
+        });
+
+
+        beaconManager = BeaconManager.getInstanceForApplication(this);
+        beaconManager.getBeaconParsers().add(new BeaconParser().setBeaconLayout("m:2-3=0215,i:4-19,i:20-21,i:22-23,p:24-24"));
+        beaconManager.bind(this);
+
+    }
+    //onCreate()..
+
+    @Override
+    public void onBeaconServiceConnect() {
+        beaconManager.removeAllMonitorNotifiers();
+        beaconManager.addMonitorNotifier(new MonitorNotifier() {
+            @Override
+            public void didEnterRegion(Region region) {
+                Log.d(TAG1, "I just saw an beacon for the first time!");
+                Toast.makeText(beacon.this, "didEnterRegion - 비콘 연결됨", Toast.LENGTH_SHORT).show();
+                textView.setText("Beacon connected");
+
+            }
+
+            @Override
+            public void didExitRegion(Region region) {
+                Log.d(TAG1, "I no longer see an beacon");
+                Toast.makeText(beacon.this, "didExitRegion - 비콘 연결 끊김", Toast.LENGTH_SHORT).show();
+                textView.setText("Beacon disconnected");
+            }
+
+            @Override
+            public void didDetermineStateForRegion(int state, Region region) {
+                if (state == 0) {
+                    Log.d(TAG1, "비콘이 보이는 상태임" + state);
+                } else {
+                    Log.d(TAG1, "비콘이 보이지 않는 상태임" + state);
+                }
+            }
+
+        });
+        beaconManager.addRangeNotifier(new RangeNotifier() {
+            @Override
+            public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
+                List<Beacon> list = (List<Beacon>) beacons;
+                if (beacons.size() > 0) {
+                    Log.d(TAG2, "The first beacon I see is about " + beacons.iterator().next().getDistance());
+                    Log.d(TAG2, "This UUID of beacon : " + beacons.iterator().next().getId1().toString());
+                    Log.d(TAG2, "This Major of beacon : " + beacons.iterator().next().getId2().toString());
+                    Log.d(TAG2, "This Minor of beacon : " + beacons.iterator().next().getId3().toString());
+                }
+            }
+        });
+        try {
+            beaconManager.startMonitoringBeaconsInRegion(new Region("beacon", null, null, null));
+        } catch (RemoteException e) {
+        }
+        try {
+            beaconManager.startRangingBeaconsInRegion(new Region("beacon", null, null, null));
+        } catch (RemoteException e) {
+        }
+    }
+    //onBeaconServiceConnect()..
+
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        beaconManager.unbind(this);
+    }
+}
+
+
+
+//    @Override
+//    public void onPointerCaptureChanged(boolean hasCapture) {
+//    }
+//
+//
+//    private void createNotification() {
+//
+//        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "default");
+//
+//        builder.setSmallIcon(R.mipmap.ic_launcher);
+//        builder.setContentTitle("cafe");
+//        builder.setContentText("비콘연결 끊김");
+//        builder.setAutoCancel(false);
+//
+//        //builder.setColor(Color.RED);
+//        // 사용자가 탭을 클릭하면 자동 제거
+//        builder.setAutoCancel(true);
+//
+//        // 알림 표시
+//        NotificationManager notificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//            notificationManager.createNotificationChannel(new NotificationChannel("default", "기본 채널", NotificationManager.IMPORTANCE_DEFAULT));
+//        }}}
